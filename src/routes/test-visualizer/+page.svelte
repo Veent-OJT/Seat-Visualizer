@@ -1,17 +1,36 @@
 <script lang="ts">
-	let seats = 0;
+	let quantity = 0;
 	let rows = 0;
 	let columns = 0;
 	let tableData: number[][] = [];
 	let columnLabels: string[] = [];
 	let rowLabels: string[] = [];
-	let columnType = 'letters';
-	let rowType = 'numbers';
+	let columnType = 'numbers';
+	let rowType = 'letters';
 	let scale = 1;
 
-	$: {
-		if (seats && rows) {
-			columns = Math.ceil(seats / rows);
+	function handleQuantityChange() {
+		if (quantity) {
+			if (rows) {
+				columns = Math.ceil(quantity / rows);
+				generateTable();
+			} else if (columns) {
+				rows = Math.ceil(quantity / columns);
+				generateTable();
+			}
+		}
+	}
+
+	function handleRowsChange() {
+		if (quantity && rows) {
+			columns = Math.ceil(quantity / rows);
+			generateTable();
+		}
+	}
+
+	function handleColumnsChange() {
+		if (quantity && columns) {
+			rows = Math.ceil(quantity / columns);
 			generateTable();
 		}
 	}
@@ -22,13 +41,35 @@
 		rowLabels = generateLabels(rows, rowType);
 
 		let seatNumber = 1;
+		let tableDataObject: { [key: string]: { void: boolean; paid: boolean } } = {};
+
 		for (let r = 0; r < rows; r++) {
 			let row = [];
 			for (let c = 0; c < columns; c++) {
-				row.push(seatNumber <= seats ? seatNumber++ : 0);
+				const currentSeat = seatNumber <= quantity ? seatNumber : 0;
+				row.push(currentSeat);
+
+				if (currentSeat) {
+					let seatKey;
+					if (columnType === 'letters' && rowType === 'numbers') {
+						// Format: A1, A2, B1, B2, etc.
+						seatKey = `${columnLabels[c]}${rowLabels[r]}`;
+					} else if (columnType === 'numbers' && rowType === 'letters') {
+						// Format: A1, A2, B1, B2, etc.
+						seatKey = `${rowLabels[r]}${columnLabels[c]}`;
+					}
+
+					tableDataObject[seatKey] = {
+						// void: true,
+						paid: false
+					};
+					seatNumber++;
+				}
 			}
 			tableData.push(row);
 		}
+
+		console.log(JSON.stringify(tableDataObject, null, 2));
 	}
 
 	function generateLabels(count: number, type: string): string[] {
@@ -87,11 +128,12 @@
 	<div class="mx-auto mb-6 max-w-md space-y-4 md:space-y-6">
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<label class="block">
-				<span class="text-gray-700">Seats:</span>
+				<span class="text-gray-700">Quantity:</span>
 				<input
 					type="number"
-					bind:value={seats}
+					bind:value={quantity}
 					min="1"
+					on:change={handleQuantityChange}
 					class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
 				/>
 			</label>
@@ -102,6 +144,7 @@
 					type="number"
 					bind:value={rows}
 					min="1"
+					on:change={handleRowsChange}
 					class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
 				/>
 			</label>
@@ -114,8 +157,8 @@
 					type="number"
 					bind:value={columns}
 					min="1"
-					readonly
-					class="mt-1 block w-full cursor-not-allowed rounded-md border-gray-300 bg-gray-100"
+					on:change={handleColumnsChange}
+					class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
 				/>
 			</label>
 
@@ -126,8 +169,8 @@
 					on:change={() => generateTable()}
 					class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
 				>
-					<option value="letters">A, B, C...</option>
-					<option value="numbers">1, 2, 3...</option>
+					<option value="letters">1, 2, 3...</option>
+					<option value="numbers">A, B, C...</option>
 				</select>
 			</label>
 
@@ -138,8 +181,8 @@
 					on:change={() => generateTable()}
 					class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
 				>
-					<option value="numbers">1, 2, 3...</option>
-					<option value="letters">A, B, C...</option>
+					<option value="numbers">A, B, C...</option>
+					<option value="letters">1, 2, 3...</option>
 				</select>
 			</label>
 		</div>
