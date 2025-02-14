@@ -1,9 +1,9 @@
 {
 	"A1": {
-		"paid": false
+		"paid": true
 	},
 	"A2": {
-		"paid": false
+		"paid": true
 	},
 	"A3": {
 		"paid": false

@@ -1,8 +1,6 @@
-
-
 .container {
     min-height: 100vh;
-    background-color: black;
+    background-color: #f9fafb;
     padding: 0.5rem;
 }
 
@@ -16,20 +14,21 @@ h1 {
     text-align: center;
     font-size: 1.5rem;
     font-weight: bold;
-    color: white;
+    color: #1f2937;
 }
 
 .venue-container {
     margin-bottom: 2rem;
     border-radius: 0.5rem;
-    background-color: rgb(24, 24, 27);
+    background-color: #ffffff;
     padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .venue-image {
     aspect-ratio: 16/9;
     position: relative;
-    background-color: rgb(39, 39, 42);
+    background-color: #e5e7eb;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -39,19 +38,19 @@ h1 {
     text-align: center;
     font-size: 1.125rem;
     font-weight: 500;
-    color: rgb(156, 163, 175);
+    color: #374151;
 }
 
 .venue-image span {
     font-size: 0.875rem;
-    color: rgb(107, 114, 128);
+    color: #6b7280;
 }
 
 .seat-layout {
-    background-color: rgb(24, 24, 27);
+    background-color: #ffffff;
     border-radius: 0.5rem;
     padding: 0.75rem;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     overflow-x: auto;
     white-space: nowrap;
 }
@@ -59,8 +58,8 @@ h1 {
 .grid {
     display: flex;
     flex-direction: column;
-    width: max-content; /* Allows it to expand based on content */
-    min-width: 100vw; /* Ensures a reasonable min width */
+    width: max-content;
+    min-width: 100vw;
 }
 
 .column-numbers {
@@ -72,7 +71,7 @@ h1 {
 .column-number {
     width: 1.75rem;
     text-align: center;
-    color: rgb(156, 163, 175);
+    color: #6b7280;
     font-size: 0.75rem;
 }
 
@@ -85,13 +84,14 @@ h1 {
 .row-label {
     width: 1.5rem;
     text-align: center;
-    color: rgb(156, 163, 175);
+    color: #6b7280;
     font-size: 0.75rem;
 }
 
 .seats {
     display: flex;
     gap: 0.25rem;
+    margin-top: 4px;
 }
 
 .seat-button {
@@ -108,22 +108,25 @@ h1 {
 }
 
 .seat-button.available {
-    background-color: rgb(39, 39, 42);
-    color: rgb(156, 163, 175);
+    /* background-color: #A8D5BA; */
+    color: #374151;
+    border-color: #A8D5BA;
+    border-width: 2px;
 }
 
 .seat-button.available:hover {
-    background-color: rgb(63, 63, 70);
+    background-color: #d1d5db;
 }
 
 .seat-button.taken {
-    background-color: rgb(63, 63, 70);
-    color: rgb(107, 114, 128);
+    background-color: #d1d5db;
+    color: #9ca3af;
     cursor: not-allowed;
+
 }
 
 .seat-button.selected {
-    background-color: rgb(239, 68, 68);
+    background-color: #7DA6FF;
     color: white;
 }
 
@@ -135,14 +138,14 @@ h1 {
 }
 
 .seat-details {
-    color: rgb(156, 163, 175);
+    color: #374151;
 }
 
 .price {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: white;
+    color: #1f2937;
 }
 
 .price span {
@@ -156,7 +159,7 @@ h1 {
 
 .reserve-button {
     width: 100%;
-    background-color: rgb(239, 68, 68);
+    background-color: #ef4444;
     color: white;
     padding: 1rem;
     border-radius: 9999px;
@@ -165,7 +168,7 @@ h1 {
 }
 
 .reserve-button:hover {
-    background-color: rgb(220, 38, 38);
+    background-color: #dc2626;
 }
 
 .legend {
@@ -174,7 +177,7 @@ h1 {
     justify-content: center;
     gap: 2rem;
     font-size: 0.875rem;
-    color: rgb(156, 163, 175);
+    color: #374151;
 }
 
 .legend-item {
@@ -190,13 +193,13 @@ h1 {
 }
 
 .legend-color.available {
-    background-color: rgb(39, 39, 42);
+    background-color: #e5e7eb;
 }
 
 .legend-color.taken {
-    background-color: rgb(63, 63, 70);
+    background-color: #d1d5db;
 }
 
 .legend-color.selected {
-    background-color: rgb(239, 68, 68);
+    background-color: #ef4444;
 }

@@ -8,19 +8,16 @@
 	let seatContainer: HTMLElement;
 	let selectedSeat: string | null = null;
 
-	// Convert seat2 into an array with seat names included
 	let seats = Object.entries(seatsObj).map(([seatName, details]) => ({
 		seatName,
 		...details
 	}));
 
-	// Get row prefix (e.g., "A" from "A1")
 	function getRowPrefix(seatName: string): string {
 		let match = seatName.match(/^[a-zA-Z]+/);
 		return match ? match[0] : seatName;
 	}
 
-	// Get unique column numbers
 	function getColumnNumbers(seats: Array<any>) {
 		let numbers = new Set<number>();
 		seats.forEach(seat => {
@@ -30,7 +27,6 @@
 		return Array.from(numbers).sort((a, b) => a - b);
 	}
 
-	// Group seats by row
 	let groupedSeats = seats.reduce(
 		(acc, seat) => {
 			let rowKey = getRowPrefix(seat.seatName);
@@ -43,14 +39,12 @@
 
 	let columnNumbers = getColumnNumbers(seats);
 
-	// Handle seat selection
 	function handleSeatClick(seat: any) {
 		if (!seat.paid) {
 			selectedSeat = selectedSeat === seat.seatName ? null : seat.seatName;
 		}
 	}
 
-	// Initialize PanZoom
 	onMount(() => {
 		const panZoomInstance = panzoom(seatContainer, {
 			maxZoom: 5,
@@ -159,7 +153,7 @@
 <style>
 	:global(body) {
 		margin: 0;
-		background-color: #000;
+		background-color: "white";
 		color: #fff;
 		min-height: 100vh;
 	}
