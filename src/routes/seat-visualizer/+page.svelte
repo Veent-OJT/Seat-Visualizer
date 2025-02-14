@@ -1,18 +1,26 @@
 <script lang="ts">
 	import panzoom from 'panzoom';
 	import { onMount } from 'svelte';
-	import "./style/seat-visualizer.css"
-	import seats from "$lib/data/seats.json"
+	import "./style/seat-visualizer.css";
+	import seatsObj from "$lib/data/seats.json";
+
 
 	let seatContainer: HTMLElement;
-
 	let selectedSeat: string | null = null;
 
+	// Convert seat2 into an array with seat names included
+	let seats = Object.entries(seatsObj).map(([seatName, details]) => ({
+		seatName,
+		...details
+	}));
+
+	// Get row prefix (e.g., "A" from "A1")
 	function getRowPrefix(seatName: string): string {
 		let match = seatName.match(/^[a-zA-Z]+/);
 		return match ? match[0] : seatName;
 	}
 
+	// Get unique column numbers
 	function getColumnNumbers(seats: Array<any>) {
 		let numbers = new Set<number>();
 		seats.forEach(seat => {
@@ -22,6 +30,7 @@
 		return Array.from(numbers).sort((a, b) => a - b);
 	}
 
+	// Group seats by row
 	let groupedSeats = seats.reduce(
 		(acc, seat) => {
 			let rowKey = getRowPrefix(seat.seatName);
@@ -34,34 +43,33 @@
 
 	let columnNumbers = getColumnNumbers(seats);
 
+	// Handle seat selection
 	function handleSeatClick(seat: any) {
 		if (!seat.paid) {
 			selectedSeat = selectedSeat === seat.seatName ? null : seat.seatName;
 		}
 	}
 
+	// Initialize PanZoom
 	onMount(() => {
-	const panZoomInstance = panzoom(seatContainer, {
-		maxZoom: 5, // Allow zooming up to 5x
-		minZoom: 1, // Keep minZoom at 1
-		bounds: false, // Allow free panning beyond bounds
-		boundsPadding: 0,
-		zoomDoubleClickSpeed: 1
+		const panZoomInstance = panzoom(seatContainer, {
+			maxZoom: 5,
+			minZoom: 1,
+			bounds: false,
+			boundsPadding: 0,
+			zoomDoubleClickSpeed: 1
+		});
+
+		panZoomInstance.on('transform', () => {
+			const transform = panZoomInstance.getTransform();
+
+			if (transform.scale <= 1) {
+				panZoomInstance.moveTo(transform.x, transform.y);
+			}
+		});
+
+		return () => panZoomInstance.dispose();
 	});
-
-	// Allow horizontal panning even when not zoomed
-	panZoomInstance.on('transform', () => {
-		const transform = panZoomInstance.getTransform();
-
-		// Prevent resetting position when scale is 1
-		if (transform.scale <= 1) {
-			panZoomInstance.moveTo(transform.x, transform.y);
-		}
-	});
-
-	return () => panZoomInstance.dispose();
-});
-
 </script>
 
 <div class="container">
@@ -74,14 +82,14 @@
 				<p>
 					VENUE FLOOR PLAN IMAGE
 					<br />
-					<span>refer to the venue image to know your seat</span>
+					<span>Refer to the venue image to know your seat</span>
 				</p>
 			</div>
 		</div>
 
 		<!-- Seat Layout -->
 		<div class="seat-layout">
-			<div  bind:this={seatContainer} class="grid">
+			<div bind:this={seatContainer} class="grid">
 				<!-- Column Numbers -->
 				<div class="column-numbers">
 					{#each columnNumbers as colNum}
@@ -99,11 +107,10 @@
 						<div class="seats">
 							{#each seats as seat}
 								<button
-									class="seat-button {seat.PAID ? 'taken' : selectedSeat === seat.seatName ? 'selected' : 'available'}"
-									disabled={seat.PAID}
+									class="seat-button {seat.paid ? 'taken' : selectedSeat === seat.seatName ? 'selected' : 'available'}"
+									disabled={seat.paid}
 									on:click={() => handleSeatClick(seat)}
 								>
-								<!-- the PAID should be lowercase but I made it uppercase to match jie's data -->
 									<span>
 										{seat.seatName}
 									</span>
@@ -151,9 +158,9 @@
 
 <style>
 	:global(body) {
-    margin: 0;
-    background-color: #000;
-    color: #fff;
-    min-height: 100vh;
-}
+		margin: 0;
+		background-color: #000;
+		color: #fff;
+		min-height: 100vh;
+	}
 </style>
