@@ -1,13 +1,17 @@
 <script lang="ts">
+	import { ZoomIn, ZoomOut } from 'lucide-svelte';
+
 	let quantity = 0;
 	let rows = 0;
 	let columns = 0;
-	let tableData: number[][] = [];
+	let tableData: string[][] = [];
 	let columnLabels: string[] = [];
 	let rowLabels: string[] = [];
 	let columnType = 'numbers';
 	let rowType = 'letters';
 	let scale = 1;
+	let startPinchDistance = 0;
+	let startScale = 1;
 
 	function handleQuantityChange() {
 		if (quantity) {
@@ -35,51 +39,6 @@
 		}
 	}
 
-	function generateTable() {
-		tableData = [];
-		columnLabels = generateLabels(columns, columnType);
-		rowLabels = generateLabels(rows, rowType);
-
-		let seatNumber = 1;
-		let tableDataObject: { [key: string]: { void: boolean; paid: boolean } } = {};
-
-		for (let r = 0; r < rows; r++) {
-			let row = [];
-			for (let c = 0; c < columns; c++) {
-				const currentSeat = seatNumber <= quantity ? seatNumber : 0;
-				row.push(currentSeat);
-
-				if (currentSeat) {
-					let seatKey;
-					if (columnType === 'letters' && rowType === 'numbers') {
-						// Format: A1, A2, B1, B2, etc.
-						seatKey = `${columnLabels[c]}${rowLabels[r]}`;
-					} else if (columnType === 'numbers' && rowType === 'letters') {
-						// Format: A1, A2, B1, B2, etc.
-						seatKey = `${rowLabels[r]}${columnLabels[c]}`;
-					}
-
-					tableDataObject[seatKey] = {
-						// void: true,
-						paid: false
-					};
-					seatNumber++;
-				}
-			}
-			tableData.push(row);
-		}
-
-		console.log(JSON.stringify(tableDataObject, null, 2));
-	}
-
-	function generateLabels(count: number, type: string): string[] {
-		let labels: string[] = [];
-		for (let i = 0; i < count; i++) {
-			labels.push(type === 'letters' ? getLetter(i) : (i + 1).toString());
-		}
-		return labels;
-	}
-
 	function getLetter(index: number): string {
 		let letter = '';
 		while (index >= 0) {
@@ -87,6 +46,48 @@
 			index = Math.floor(index / 26) - 1;
 		}
 		return letter;
+	}
+
+	function generateLabels(count: number, type: string): string[] {
+		return Array.from({ length: count }, (_, i) =>
+			type === 'letters' ? getLetter(i) : (i + 1).toString()
+		);
+	}
+
+	function generateTable() {
+		if (!rows || !columns) return;
+
+		tableData = [];
+		columnLabels = generateLabels(columns, columnType);
+		rowLabels = generateLabels(rows, rowType);
+
+		const tableDataObject: { [key: string]: { paid: boolean } } = {};
+
+		for (let r = 0; r < rows; r++) {
+			const row: string[] = [];
+			for (let c = 0; c < columns; c++) {
+				const seatNumber = c + 1;
+				let currentSeat = '';
+
+				if (seatNumber <= quantity) {
+					currentSeat =
+						columnType === 'letters'
+							? `${columnLabels[c]}${rowLabels[r]}`
+							: `${rowLabels[r]}${columnLabels[c]}`;
+				}
+
+				row.push(currentSeat);
+
+				if (currentSeat) {
+					tableDataObject[currentSeat] = {
+						paid: false
+					};
+				}
+			}
+			tableData.push(row);
+		}
+
+		console.log(JSON.stringify(tableDataObject, null, 2));
 	}
 
 	function handleTouchStart(e: TouchEvent) {
@@ -99,9 +100,6 @@
 			startScale = scale;
 		}
 	}
-
-	let startPinchDistance = 0;
-	let startScale = 1;
 
 	function handleTouchMove(e: TouchEvent) {
 		if (e.touches.length === 2) {
@@ -122,161 +120,189 @@
 			scale = Math.min(Math.max(0.5, scale * delta), 3);
 		}
 	}
+
+	function handleZoom(direction: 'in' | 'out') {
+		const delta = direction === 'in' ? 1.1 : 0.9;
+		const newScale = scale * delta;
+
+		// Prevent zooming in beyond 100%
+		if (newScale > 1) {
+			scale = 1;
+		} else {
+			scale = Math.min(Math.max(0.5, newScale), 1);
+		}
+	}
+
+	$: if (quantity || rows || columns || columnType || rowType) {
+		generateTable();
+	}
 </script>
 
-<div class="max-w-full bg-gray-50 p-4">
-	<div class="mx-auto mb-6 max-w-md space-y-4 md:space-y-6">
-		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-			<label class="block">
-				<span class="text-gray-700">Quantity:</span>
-				<input
-					type="number"
-					bind:value={quantity}
-					min="1"
-					on:change={handleQuantityChange}
-					class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-				/>
-			</label>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+	<div class="mx-auto max-w-7xl">
+		<h1 class="mb-8 text-center text-3xl font-bold text-gray-800">Seating Visualizer</h1>
 
-			<label class="block">
-				<span class="text-gray-700">Rows:</span>
-				<input
-					type="number"
-					bind:value={rows}
-					min="1"
-					on:change={handleRowsChange}
-					class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-				/>
-			</label>
+		<div class="mb-8 rounded-xl bg-white p-6 shadow-lg">
+			<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+				<div class="space-y-2">
+					<label for="quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+					<input
+						type="number"
+						id="quantity"
+						bind:value={quantity}
+						min="1"
+						on:change={handleQuantityChange}
+						class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+						placeholder="Enter total seats"
+					/>
+				</div>
+
+				<div class="space-y-2">
+					<label for="rows" class="block text-sm font-medium text-gray-700">Rows</label>
+					<input
+						type="number"
+						id="rows"
+						bind:value={rows}
+						min="1"
+						on:change={handleRowsChange}
+						class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+						placeholder="Enter number of rows"
+					/>
+				</div>
+
+				<div class="space-y-2">
+					<label for="columns" class="block text-sm font-medium text-gray-700">Columns</label>
+					<input
+						id="columns"
+						type="number"
+						bind:value={columns}
+						min="1"
+						on:change={handleColumnsChange}
+						class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+						placeholder="Enter number of columns"
+					/>
+				</div>
+
+				<div class="space-y-2">
+					<label for="columnType" class="block text-sm font-medium text-gray-700">Column Type</label
+					>
+					<select
+						id="columnType"
+						bind:value={columnType}
+						class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+					>
+						<option value="numbers">1, 2, 3...</option>
+						<option value="letters">A, B, C...</option>
+					</select>
+				</div>
+
+				<div class="space-y-2">
+					<label for="rowType" class="block text-sm font-medium text-gray-700">Row Type</label>
+					<select
+						id="rowType"
+						bind:value={rowType}
+						class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+					>
+						<option value="letters">A, B, C...</option>
+						<option value="numbers">1, 2, 3...</option>
+					</select>
+				</div>
+			</div>
 		</div>
 
-		<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-			<label class="block">
-				<span class="text-gray-700">Columns:</span>
-				<input
-					type="number"
-					bind:value={columns}
-					min="1"
-					on:change={handleColumnsChange}
-					class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-				/>
-			</label>
-
-			<label class="block">
-				<span class="text-gray-700">Column Type:</span>
-				<select
-					bind:value={columnType}
-					on:change={() => generateTable()}
-					class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+		<div class="relative rounded-xl bg-white p-4 shadow-lg">
+			<div class="mb-4 flex items-center justify-between">
+				<h2 class="text-lg font-semibold text-gray-800">Seating Layout</h2>
+				<div class="flex items-center gap-2">
+					<button
+						on:click={() => handleZoom('out')}
+						class="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+						title="Zoom Out"
+					>
+						<ZoomOut size={20} />
+					</button>
+					<span class="min-w-[4rem] text-center text-sm text-gray-600">
+						{Math.round(scale * 100)}%
+					</span>
+					<button
+						on:click={() => handleZoom('in')}
+						class="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+						title="Zoom In"
+					>
+						<ZoomIn size={20} />
+					</button>
+				</div>
+			</div>
+			<div class="table-wrapper">
+				<div
+					class="max-h-[60vh] overflow-auto rounded-lg border border-gray-200"
+					on:touchstart={handleTouchStart}
+					on:touchmove={handleTouchMove}
+					on:wheel={handleWheel}
 				>
-					<option value="letters">1, 2, 3...</option>
-					<option value="numbers">A, B, C...</option>
-				</select>
-			</label>
+					<div class="min-w-full origin-top-left" style="transform: scale({scale})">
+						<table class="w-full border-collapse">
+							<thead>
+								<tr>
+									<th class="sticky top-0 left-0 z-30 bg-blue-50 p-3"></th>
+									{#each columnLabels as label}
+										<th
+											class="sticky top-0 z-20 bg-blue-50 p-3 text-sm font-semibold text-gray-700"
+										>
+											{label}
+										</th>
+									{/each}
+								</tr>
+							</thead>
+							<tbody>
+								{#each tableData as row, rowIndex}
+									<tr>
+										<td
+											class="sticky left-0 z-10 bg-blue-50 p-3 text-sm font-semibold text-gray-700"
+										>
+											{rowLabels[rowIndex]}
+										</td>
+										{#each row as seat}
+											<td
+												class="border border-gray-200 p-3 text-center text-sm {seat
+													? 'cursor-pointer hover:bg-blue-50'
+													: 'bg-gray-50'}"
+											>
+												{seat || '-'}
+											</td>
+										{/each}
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
 
-			<label class="block">
-				<span class="text-gray-700">Row Type:</span>
-				<select
-					bind:value={rowType}
-					on:change={() => generateTable()}
-					class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-				>
-					<option value="numbers">A, B, C...</option>
-					<option value="letters">1, 2, 3...</option>
-				</select>
-			</label>
+			<p class="mt-4 text-center text-sm text-gray-500">
+				Use Ctrl + Mouse Wheel or pinch gesture to zoom
+			</p>
 		</div>
-	</div>
-
-	<div
-		class="relative max-h-[70vh] max-w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg"
-		on:touchstart={handleTouchStart}
-		on:touchmove={handleTouchMove}
-		on:wheel={handleWheel}
-	>
-		<div class="seat-chart min-w-full" style="transform: scale({scale}); transform-origin: 0 0;">
-			<table class="w-full border-collapse">
-				<thead>
-					<tr>
-						<th class="corner-cell bg-blue-100 p-3"></th>
-						{#each columnLabels as label}
-							<th class="column-header p-3 text-sm font-semibold text-gray-700">
-								{label}
-							</th>
-						{/each}
-					</tr>
-				</thead>
-				<tbody>
-					{#each tableData as row, rIndex}
-						<tr>
-							<td class="row-label p-3 text-sm font-semibold text-gray-700">
-								{rowLabels[rIndex]}
-							</td>
-							{#each row as seat}
-								<td
-									class="border border-gray-200 p-3 text-center text-sm {seat
-										? 'cursor-pointer hover:bg-blue-50'
-										: 'bg-gray-50'}"
-								>
-									{seat || '-'}
-								</td>
-							{/each}
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-	</div>
-
-	<div class="mt-4 text-center text-sm text-gray-600">
-		<p>Pinch or use Ctrl + Mouse Wheel to zoom</p>
-		<p>Current zoom: {Math.round(scale * 100)}%</p>
 	</div>
 </div>
 
 <style>
-	/* Fixed header styles */
-	.column-header {
+	/* Ensure proper z-index stacking for sticky elements */
+	:global(thead) {
 		position: sticky;
 		top: 0;
 		z-index: 20;
-		background-color: #f0f9ff;
-		border: 1px solid #e5e7eb;
 	}
 
-	/* Fixed row label styles */
-	.row-label {
+	:global(td:first-child) {
 		position: sticky;
 		left: 0;
 		z-index: 10;
-		background-color: #f0f9ff;
-		border: 1px solid #e5e7eb;
 	}
 
-	/* Corner cell (intersection of fixed header and row label) */
-	.corner-cell {
+	:global(th:first-child) {
 		position: sticky;
-		top: 0;
 		left: 0;
 		z-index: 30;
-		background-color: #f0f9ff;
-		border: 1px solid #e5e7eb;
-	}
-
-	/* Ensure the table container has proper scroll behavior */
-	.seat-chart {
-		position: relative;
-	}
-
-	/* Add box-shadow for better visual separation */
-	.column-header,
-	.row-label {
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-	}
-
-	.corner-cell {
-		box-shadow:
-			0 1px 2px rgba(0, 0, 0, 0.05),
-			1px 0 2px rgba(0, 0, 0, 0.05);
 	}
 </style>
