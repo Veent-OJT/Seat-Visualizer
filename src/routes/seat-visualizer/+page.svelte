@@ -1,107 +1,159 @@
 <script lang="ts">
-    import panzoom from 'panzoom';
-    import { onMount } from 'svelte';
+	import panzoom from 'panzoom';
+	import { onMount } from 'svelte';
+	import "./style/seat-visualizer.css"
+	import seats from "$lib/data/seats.json"
 
-    let seatContainer: any;
+	let seatContainer: HTMLElement;
 
-    let seats = [
-        { seatName: "a1", paid: true, registrantsInfo: null },
-        { seatName: "a2", paid: false, registrantsInfo: null },
-        { seatName: "a3", paid: false, registrantsInfo: null },
-        { seatName: "a4", paid: true, registrantsInfo: null },
-        { seatName: "b1", paid: true, registrantsInfo: null },
-        { seatName: "b2", paid: false, registrantsInfo: null },
-        { seatName: "b3", paid: true, registrantsInfo: null },
-        { seatName: "c1", paid: false, registrantsInfo: null },
-        { seatName: "c2", paid: true, registrantsInfo: null },
-        { seatName: "c3", paid: true, registrantsInfo: null },
-        { seatName: "aa1", paid: true, registrantsInfo: null },
-        { seatName: "bs2", paid: true, registrantsInfo: null }
-    ];
+	let selectedSeat: string | null = null;
 
-    function getRowPrefix(seatName: string): string {
-        let match = seatName.match(/^[a-zA-Z]+/);
-        return match ? match[0] : seatName;
-    }
+	function getRowPrefix(seatName: string): string {
+		let match = seatName.match(/^[a-zA-Z]+/);
+		return match ? match[0] : seatName;
+	}
 
-    let groupedSeats = seats.reduce((acc, seat) => {
-        let rowKey = getRowPrefix(seat.seatName);
-        if (!acc[rowKey]) acc[rowKey] = [];
-        acc[rowKey].push(seat);
-        return acc;
-    }, {} as Record<string, typeof seats>);
+	function getColumnNumbers(seats: Array<any>) {
+		let numbers = new Set<number>();
+		seats.forEach(seat => {
+			let num = parseInt(seat.seatName.replace(/[^0-9]/g, ''), 10);
+			if (!isNaN(num)) numbers.add(num);
+		});
+		return Array.from(numbers).sort((a, b) => a - b);
+	}
 
-    onMount(() => {
-        const panZoomInstance = panzoom(seatContainer, {
-            maxZoom: 3,
-            minZoom: 0.5,
-            zoomDoubleClickSpeed: 1,
-        });
+	let groupedSeats = seats.reduce(
+		(acc, seat) => {
+			let rowKey = getRowPrefix(seat.seatName);
+			if (!acc[rowKey]) acc[rowKey] = [];
+			acc[rowKey].push(seat);
+			return acc;
+		},
+		{} as Record<string, typeof seats>
+	);
 
-        return () => panZoomInstance.dispose();
-    });
+	let columnNumbers = getColumnNumbers(seats);
+
+	function handleSeatClick(seat: any) {
+		if (!seat.paid) {
+			selectedSeat = selectedSeat === seat.seatName ? null : seat.seatName;
+		}
+	}
+
+	onMount(() => {
+	const panZoomInstance = panzoom(seatContainer, {
+		maxZoom: 5, // Allow zooming up to 5x
+		minZoom: 1, // Keep minZoom at 1
+		bounds: false, // Allow free panning beyond bounds
+		boundsPadding: 0,
+		zoomDoubleClickSpeed: 1
+	});
+
+	// Allow horizontal panning even when not zoomed
+	panZoomInstance.on('transform', () => {
+		const transform = panZoomInstance.getTransform();
+
+		// Prevent resetting position when scale is 1
+		if (transform.scale <= 1) {
+			panZoomInstance.moveTo(transform.x, transform.y);
+		}
+	});
+
+	return () => panZoomInstance.dispose();
+});
+
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-800">
-            Seat Layout
-        </h1>
-        <div bind:this={seatContainer} class="zoom-container">
-            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 backdrop-blur-sm bg-opacity-90">
-                <div class="grid gap-6">
-                    {#each Object.entries(groupedSeats) as [row, seats]}
-                        <div class="flex flex-wrap items-center gap-4">
-                            <div class="flex items-center justify-center w-10 h-10 rounded-full bg-indigo-600 text-white font-bold">
-                                {row.toUpperCase()}
-                            </div>
-                            <div class="flex flex-wrap gap-3">
-                                {#each seats as seat}
-                                    <button 
-                                        class="relative group w-14 h-14 md:w-16 md:h-16 flex items-center justify-center rounded-lg transition-all duration-300 transform hover:scale-105
-                                        {seat.paid ? 
-                                            'bg-gradient-to-br from-red-500 to-red-600 text-white cursor-not-allowed' : 
-                                            'bg-gradient-to-br from-emerald-400 to-emerald-500 text-white cursor-pointer hover:from-emerald-500 hover:to-emerald-600'}"
-                                        disabled={seat.paid}
-                                        on:click={() => {
-                                            alert("You've selected seat " + seat.seatName);
-                                        }}
-                                    >
-                                        <span class="font-medium text-sm md:text-base">
-                                            {seat.seatName}
-                                        </span>
-                                        {#if seat.paid}
-                                            <div class="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
-                                        {/if}
-                                        <div class="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black bg-opacity-10"></div>
-                                    </button>
-                                {/each}
-                            </div>
-                        </div>
-                    {/each}
-                </div>
-            </div>
-        </div>
+<div class="container">
+	<div class="content">
+		<h1>Select Seats</h1>
 
-        <div class="mt-8 flex flex-wrap gap-4 justify-center items-center text-sm text-gray-600">
-            <div class="flex items-center gap-2">
-                <div class="w-4 h-4 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500"></div>
-                <span>Available</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <div class="w-4 h-4 rounded-full bg-gradient-to-br from-red-500 to-red-600"></div>
-                <span>Occupied</span>
-            </div>
-        </div>
-    </div>
+		<!-- Venue Image -->
+		<div class="venue-container">
+			<div class="venue-image">
+				<p>
+					VENUE FLOOR PLAN IMAGE
+					<br />
+					<span>refer to the venue image to know your seat</span>
+				</p>
+			</div>
+		</div>
+
+		<!-- Seat Layout -->
+		<div class="seat-layout">
+			<div  bind:this={seatContainer} class="grid">
+				<!-- Column Numbers -->
+				<div class="column-numbers">
+					{#each columnNumbers as colNum}
+						<div class="column-number">
+							{colNum}
+						</div>
+					{/each}
+				</div>
+
+				{#each Object.entries(groupedSeats) as [row, seats]}
+					<div class="row">
+						<div class="row-label">
+							{row.toUpperCase()}
+						</div>
+						<div class="seats">
+							{#each seats as seat}
+								<button
+									class="seat-button {seat.PAID ? 'taken' : selectedSeat === seat.seatName ? 'selected' : 'available'}"
+									disabled={seat.PAID}
+									on:click={() => handleSeatClick(seat)}
+								>
+								<!-- the PAID should be lowercase but I made it uppercase to match jie's data -->
+									<span>
+										{seat.seatName}
+									</span>
+								</button>
+							{/each}
+						</div>
+					</div>
+				{/each}
+			</div>
+		</div>
+
+		<!-- Legend and Price -->
+		{#if selectedSeat}
+			<div class="price-info">
+				<div class="seat-details">
+					<p>Row {getRowPrefix(selectedSeat).toUpperCase()}</p>
+					<p>Seat {selectedSeat.replace(/[^0-9]/g, '')}</p>
+				</div>
+				<div class="price">
+					<span>Total Price</span>
+					<span class="amount">$149.99</span>
+				</div>
+				<button class="reserve-button">
+					Reserve Seat
+				</button>
+			</div>
+		{:else}
+			<div class="legend">
+				<div class="legend-item">
+					<div class="legend-color available"></div>
+					<span>Available</span>
+				</div>
+				<div class="legend-item">
+					<div class="legend-color taken"></div>
+					<span>Taken</span>
+				</div>
+				<div class="legend-item">
+					<div class="legend-color selected"></div>
+					<span>Selected</span>
+				</div>
+			</div>
+		{/if}
+	</div>
 </div>
 
 <style>
-    .zoom-container {
-        width: 100%;
-        max-height: 500px;
-        overflow: hidden;
-        border: 1px solid #ddd;
-        touch-action: none;
-    }
+	:global(body) {
+    margin: 0;
+    background-color: #000;
+    color: #fff;
+    min-height: 100vh;
+}
 </style>
