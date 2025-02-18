@@ -57,15 +57,7 @@
     {/each}
 </div> -->
 
-
-
-
 <!-- rows + col = a1 -->
-
-
-<script lang="ts">
-
-</script>
 
 <div class="flex flex-col items-center justify-center h-screen">
     <a href="/seat-visualizer">Seat Visualizer</a>
