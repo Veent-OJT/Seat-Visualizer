@@ -61,35 +61,58 @@
 					return false;
 				}
 				return true;
-			}
+			},
+			smoothScroll: false,
 		});
 
 		if (isMobile) {
 			let touchStartTime: number;
 			let hasMoved = false;
-
-			seatContainer.addEventListener('touchstart', (e) => {
+			let lastTouchEnd = 0;
+			
+			const touchStart = (e: TouchEvent) => {
 				touchStartTime = Date.now();
 				hasMoved = false;
-			}, { passive: true });
+			};
 
-			seatContainer.addEventListener('touchmove', () => {
+			const touchMove = () => {
 				hasMoved = true;
-			}, { passive: true });
+			};
 
-			seatContainer.addEventListener('touchend', (e) => {
+			const touchEnd = (e: TouchEvent) => {
 				const touchDuration = Date.now() - touchStartTime;
 				const target = e.target as HTMLElement;
 				
-				if (!hasMoved && touchDuration < 200 && target.classList.contains('seat-button')) {
+				const now = Date.now();
+				if (now - lastTouchEnd <= 300) {
+					e.preventDefault();
+				}
+				lastTouchEnd = now;
+				
+				const isSeatButton = target.classList.contains('seat-button') || 
+									target.parentElement?.classList.contains('seat-button');
+				
+				if (!hasMoved && touchDuration < 200 && isSeatButton) {
 					e.preventDefault();
 					e.stopPropagation();
-					const seatData = seats.find(s => s.seatName === target.textContent?.trim());
+					const button = target.classList.contains('seat-button') ? target : target.parentElement;
+					const seatData = seats.find(s => s.seatName === button?.textContent?.trim());
 					if (seatData) {
 						handleSeatClick(seatData);
 					}
 				}
-			});
+			};
+
+			seatContainer.addEventListener('touchstart', touchStart, { passive: true });
+			seatContainer.addEventListener('touchmove', touchMove, { passive: true });
+			seatContainer.addEventListener('touchend', touchEnd);
+
+			return () => {
+				seatContainer.removeEventListener('touchstart', touchStart);
+				seatContainer.removeEventListener('touchmove', touchMove);
+				seatContainer.removeEventListener('touchend', touchEnd);
+				panZoomInstance.dispose();
+			};
 		}
 
 		panZoomInstance.on('transform', () => {

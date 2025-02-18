@@ -115,7 +115,10 @@ h1 {
 }
 
 .seat-button.available:hover {
-    background-color: #d1d5db;
+    /* Only apply hover effect on non-touch devices */
+    @media (hover: hover) {
+        background-color: #A8D5BA;
+    }
 }
 
 .seat-button.taken {
