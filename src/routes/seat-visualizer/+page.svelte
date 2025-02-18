@@ -56,7 +56,11 @@
 			boundsPadding: 0,
 			zoomDoubleClickSpeed: 1,
 			beforeMouseDown: (e) => {
-				if ((e.target as HTMLElement).classList.contains('seat-button')) {
+				const target = e.target as HTMLElement;
+				const isSeatButton = target.classList.contains('seat-button') || 
+								   target.parentElement?.classList.contains('seat-button');
+				
+				if (isSeatButton) {
 					e.stopPropagation();
 					return false;
 				}
@@ -90,7 +94,7 @@
 				lastTouchEnd = now;
 				
 				const isSeatButton = target.classList.contains('seat-button') || 
-									target.parentElement?.classList.contains('seat-button');
+								   target.parentElement?.classList.contains('seat-button');
 				
 				if (!hasMoved && touchDuration < 200 && isSeatButton) {
 					e.preventDefault();
