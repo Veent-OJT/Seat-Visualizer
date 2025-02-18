@@ -52,8 +52,8 @@
 		const panZoomInstance = panzoom(seatContainer, {
 			maxZoom: 5,
 			minZoom: 1,
-			bounds: false,
-			boundsPadding: 0,
+			bounds: true,
+			boundsPadding: 0.4,
 			zoomDoubleClickSpeed: 1,
 			beforeMouseDown: (e) => {
 				const target = e.target as HTMLElement;
@@ -66,7 +66,14 @@
 				}
 				return true;
 			},
-			smoothScroll: false,
+			smoothScroll: false
+		});
+
+		panZoomInstance.on('transform', () => {
+			const transform = panZoomInstance.getTransform();
+			if (transform.scale <= 1) {
+				panZoomInstance.moveTo(transform.x, transform.y);
+			}
 		});
 
 		if (isMobile) {
@@ -118,13 +125,6 @@
 				panZoomInstance.dispose();
 			};
 		}
-
-		panZoomInstance.on('transform', () => {
-			const transform = panZoomInstance.getTransform();
-			if (transform.scale <= 1) {
-				panZoomInstance.moveTo(transform.x, transform.y);
-			}
-		});
 
 		return () => {
 			panZoomInstance.dispose();
