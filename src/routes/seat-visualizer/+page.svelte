@@ -43,26 +43,65 @@
 		if (!seat.paid) {
 			selectedSeat = selectedSeat === seat.seatName ? null : seat.seatName;
 		}
+		console.log("clicked")
 	}
 
 	onMount(() => {
+		const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+		
 		const panZoomInstance = panzoom(seatContainer, {
 			maxZoom: 5,
 			minZoom: 1,
 			bounds: false,
 			boundsPadding: 0,
-			zoomDoubleClickSpeed: 1
+			zoomDoubleClickSpeed: 1,
+			beforeMouseDown: (e) => {
+				if ((e.target as HTMLElement).classList.contains('seat-button')) {
+					e.stopPropagation();
+					return false;
+				}
+				return true;
+			}
 		});
+
+		if (isMobile) {
+			let touchStartTime: number;
+			let hasMoved = false;
+
+			seatContainer.addEventListener('touchstart', (e) => {
+				touchStartTime = Date.now();
+				hasMoved = false;
+			}, { passive: true });
+
+			seatContainer.addEventListener('touchmove', () => {
+				hasMoved = true;
+			}, { passive: true });
+
+			seatContainer.addEventListener('touchend', (e) => {
+				const touchDuration = Date.now() - touchStartTime;
+				const target = e.target as HTMLElement;
+				
+				if (!hasMoved && touchDuration < 200 && target.classList.contains('seat-button')) {
+					e.preventDefault();
+					e.stopPropagation();
+					const seatData = seats.find(s => s.seatName === target.textContent?.trim());
+					if (seatData) {
+						handleSeatClick(seatData);
+					}
+				}
+			});
+		}
 
 		panZoomInstance.on('transform', () => {
 			const transform = panZoomInstance.getTransform();
-
 			if (transform.scale <= 1) {
 				panZoomInstance.moveTo(transform.x, transform.y);
 			}
 		});
 
-		return () => panZoomInstance.dispose();
+		return () => {
+			panZoomInstance.dispose();
+		};
 	});
 </script>
 
