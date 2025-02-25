@@ -109,7 +109,10 @@
 			const distance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
 
 			const newScale = (distance / startPinchDistance) * startScale;
-			scale = Math.min(Math.max(0.5, newScale), 3);
+			// Only allow zooming in if current scale is less than 1
+			if (scale < 1 || newScale < scale) {
+				scale = Math.min(Math.max(0.5, newScale), 1);
+			}
 		}
 	}
 
@@ -117,7 +120,10 @@
 		if (e.ctrlKey) {
 			e.preventDefault();
 			const delta = e.deltaY > 0 ? 0.9 : 1.1;
-			scale = Math.min(Math.max(0.5, scale * delta), 3);
+			// Only allow zooming in if current scale is less than 1
+			if (scale < 1 || delta < 1) {
+				scale = Math.min(Math.max(0.5, scale * delta), 1);
+			}
 		}
 	}
 
