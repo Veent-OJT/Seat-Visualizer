@@ -108,7 +108,25 @@
 	};
 
 	const handleSaveLayout = () => {
-		console.log('Saving layout:', { frontLabel, labelPosition, section });
+		// Create a structured output object
+		const seatLayout: Record<string, { void: boolean; paid: boolean }> = {};
+
+		// Iterate through each seat and create the structured data
+		section.seats.forEach((row, rowIndex) => {
+			row.forEach((seat, seatIndex) => {
+				const seatLabel = generateSeatLabel(section.seatConfig, rowIndex, seatIndex);
+				seatLayout[seatLabel] = {
+					void: !seat,
+					paid: false
+				};
+			});
+		});
+
+		console.log('Saving layout:', {
+			frontLabel,
+			labelPosition,
+			seats: seatLayout
+		});
 	};
 
 	onMount(() => {
@@ -336,85 +354,100 @@
 			</div>
 		</div>
 	</div>
+	<!--  seat layout preview section with this updated version -->
 
 	<div class="relative h-[600px] overflow-hidden rounded border">
-		<div class="relative h-full w-full overflow-hidden">
+		<div class="relative h-full w-full overflow-hidden bg-gray-100 p-8">
+			<!-- top front label -->
 			{#if labelPosition === 'top'}
-				<div class="sticky top-0 z-10 mb-4 border-b bg-white p-4 text-center">
+				<div class="sticky top-0 z-10 mb-4 border-b bg-rose-400 p-4 text-center text-white">
 					{frontLabel}
 				</div>
 			{/if}
 
+			<!-- left front label -->
 			<div class="flex h-full">
 				{#if labelPosition === 'left'}
 					<div
-						class="writing-vertical sticky left-0 z-10 flex w-24 items-center justify-center border-r bg-white p-4"
+						class="writing-vertical sticky left-0 z-10 flex w-24 items-center justify-center border-r bg-rose-400 p-4 text-white"
 					>
 						{frontLabel}
 					</div>
 				{/if}
 
-				<div bind:this={seatContainer} class="inline-block min-w-min p-4">
-					<table class="border-separate border-spacing-1">
-						<tbody>
-							{#each section.seats as row, rowIndex}
-								<tr class="h-8">
-									{#if section.seatConfig.rowLabel === 'Left Side' || section.seatConfig.rowLabel === 'Show All'}
-										<td class="w-8 pr-2 text-right whitespace-nowrap">
-											{generateRowLabel(
-												section.seatConfig.rowStartChar,
-												section.seatConfig.rowOrder === 'down'
-													? rowIndex
-													: section.seatConfig.rows - 1 - rowIndex
-											)}
-										</td>
-									{/if}
+				<!-- Add a border container for the seating area -->
+				<div class="relative flex-1 rounded-lg border-2 border-red-500 bg-white p-8">
+					<div bind:this={seatContainer} class="inline-block min-w-min">
+						<table class="mx-auto border-separate border-spacing-1">
+							<tbody>
+								{#each section.seats as row, rowIndex}
+									<tr class="h-8">
+										{#if section.seatConfig.rowLabel === 'Left Side' || section.seatConfig.rowLabel === 'Show All'}
+											<td class="w-8 pr-2 text-right font-medium whitespace-nowrap">
+												{generateRowLabel(
+													section.seatConfig.rowStartChar,
+													section.seatConfig.rowOrder === 'down'
+														? rowIndex
+														: section.seatConfig.rows - 1 - rowIndex
+												)}
+											</td>
+										{/if}
 
-									<td class="px-2">
-										<div class="flex gap-1">
-											{#each row as seat, seatIndex}
-												<button
-													class="flex h-8 w-8 items-center justify-center rounded-md border text-xs hover:bg-gray-200"
-													class:bg-green-500={seat}
-													class:text-white={seat}
-													on:click={() => handleSeatClick(rowIndex, seatIndex)}
-												>
-													{generateSeatLabel(section.seatConfig, rowIndex, seatIndex)}
-												</button>
-											{/each}
-										</div>
-									</td>
-
-									{#if section.seatConfig.rowLabel === 'Right Side' || section.seatConfig.rowLabel === 'Show All'}
-										<td class="w-8 pl-2 text-left whitespace-nowrap">
-											{generateRowLabel(
-												section.seatConfig.rowStartChar,
-												section.seatConfig.rowOrder === 'down'
-													? rowIndex
-													: section.seatConfig.rows - 1 - rowIndex
-											)}
+										<td class="px-2">
+											<div class="flex gap-1">
+												{#each row as seat, seatIndex}
+													<button
+														class="flex h-8 w-8 items-center justify-center rounded-md border text-xs transition-colors hover:bg-gray-200"
+														class:bg-green-500={seat}
+														class:text-white={seat}
+														on:click={() => handleSeatClick(rowIndex, seatIndex)}
+													>
+														{generateSeatLabel(section.seatConfig, rowIndex, seatIndex)}
+													</button>
+												{/each}
+											</div>
 										</td>
-									{/if}
-								</tr>
-							{/each}
-						</tbody>
-					</table>
+
+										{#if section.seatConfig.rowLabel === 'Right Side' || section.seatConfig.rowLabel === 'Show All'}
+											<td class="w-8 pl-2 text-left font-medium whitespace-nowrap">
+												{generateRowLabel(
+													section.seatConfig.rowStartChar,
+													section.seatConfig.rowOrder === 'down'
+														? rowIndex
+														: section.seatConfig.rows - 1 - rowIndex
+												)}
+											</td>
+										{/if}
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
 				</div>
 
+				<!-- right front label -->
 				{#if labelPosition === 'right'}
 					<div
-						class="writing-vertical sticky right-0 z-10 flex w-24 items-center justify-center border-l bg-white p-4"
+						class="writing-vertical sticky right-0 z-10 flex w-24 items-center justify-center border-l bg-rose-400 p-4 text-white"
 					>
 						{frontLabel}
 					</div>
 				{/if}
 			</div>
 
+			<!-- bottom front label -->
 			{#if labelPosition === 'bottom'}
-				<div class="sticky bottom-0 z-10 mt-4 border-t bg-white p-4 text-center">
+				<div class="sticky bottom-0 z-10 mt-4 border-t bg-rose-400 p-4 text-center text-white">
 					{frontLabel}
 				</div>
 			{/if}
+
+			<!-- Add stage label at the bottom -->
+			<div class="mt-8 text-center">
+				<div class="mx-auto w-48 rounded border bg-rose-400 p-2 text-center font-medium text-white">
+					STAGE
+				</div>
+			</div>
 		</div>
 	</div>
 
