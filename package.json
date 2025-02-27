@@ -46,6 +46,8 @@
 		"lucide-svelte": "^0.475.0",
 		"panzoom": "^9.4.3",
 		"react-zoom-pan-pinch": "^3.7.0",
-		"svelte-pan-zoom": "^0.0.13"
+		"remixicon": "^4.6.0",
+		"svelte-pan-zoom": "^0.0.13",
+		"tippy.js": "^6.3.7"
 	}
 }
